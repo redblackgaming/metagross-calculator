@@ -1,0 +1,296 @@
+{
+  "data": {
+    "__type": {
+      "fields": [
+        {
+          "name": "PokemonevolutionsByPartySpeciesId",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "PokemonevolutionsByPartySpeciesId_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "PokemonevolutionsByTradeSpeciesId",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "PokemonevolutionsByTradeSpeciesId_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "base_happiness",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "capture_rate",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "evolution_chain_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "evolutionchain",
+          "type": {
+            "name": "evolutionchain"
+          }
+        },
+        {
+          "name": "evolves_from_species_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "forms_switchable",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "gender_rate",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "generation",
+          "type": {
+            "name": "generation"
+          }
+        },
+        {
+          "name": "generation_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "growth_rate_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "growthrate",
+          "type": {
+            "name": "growthrate"
+          }
+        },
+        {
+          "name": "has_gender_differences",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "hatch_counter",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "id",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "is_baby",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "is_legendary",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "is_mythical",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "name",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "order",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "palparks",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "palparks_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemon_color_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "pokemon_habitat_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "pokemon_shape_id",
+          "type": {
+            "name": "Int"
+          }
+        },
+        {
+          "name": "pokemoncolor",
+          "type": {
+            "name": "pokemoncolor"
+          }
+        },
+        {
+          "name": "pokemondexnumbers",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemondexnumbers_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonegggroups",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonegggroups_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonevolutions",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonevolutions_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonhabitat",
+          "type": {
+            "name": "pokemonhabitat"
+          }
+        },
+        {
+          "name": "pokemons",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemons_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonshape",
+          "type": {
+            "name": "pokemonshape"
+          }
+        },
+        {
+          "name": "pokemonspecies",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspecies_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspeciesdescriptions",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspeciesdescriptions_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspeciesflavortexts",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspeciesflavortexts_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspeciesnames",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspeciesnames_aggregate",
+          "type": {
+            "name": null
+          }
+        },
+        {
+          "name": "pokemonspecy",
+          "type": {
+            "name": "pokemonspecies"
+          }
+        }
+      ]
+    }
+  }
+}

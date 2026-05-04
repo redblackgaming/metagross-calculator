@@ -1,0 +1,17 @@
+tmp/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+venv/
+.venv/
+.jj
+.vscode
+
+# Next.js (project in ./app)
+app/.next/
+app/out/
+app/node_modules/
+app/data/pokemon.json
+app/tmp/cache.json
+app/.env*.local

@@ -1,0 +1,44 @@
+# SETUP REQUIRED:
+# 1. Set DEPLOY_TOKEN as a repository secret (Settings → Secrets → Actions).
+#    It must be a Personal Access Token with `repo` scope.
+# 2. Update `external_repository` below to your target GitHub Pages repo,
+#    e.g. "myusername/myusername.github.io" or "myusername/meta-gross-pages".
+
+name: Build and Deploy
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
+
+      - name: Fetch Pokémon data
+        run: node scripts/fetch-pokemon.js
+        working-directory: app
+
+      - name: Build static export
+        run: npm run build
+        working-directory: app
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          external_repository: <owner>/<pages-repo>
+          publish_branch: gh-pages
+          publish_dir: app/out
