@@ -65,16 +65,6 @@ async function main() {
   fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
   fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
 
-  // If an override file exists, use it directly and skip fetching
-  const OVERRIDE_FILE = path.join(__dirname, '../data/pokemon-override.json');
-  if (fs.existsSync(OVERRIDE_FILE)) {
-    console.log('Using pokemon-override.json');
-    fs.copyFileSync(OVERRIDE_FILE, OUTPUT_FILE);
-    const count = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8')).length;
-    console.log(`Wrote ${count} pokemon to data/pokemon.json (from override)`);
-    return;
-  }
-
   let data;
 
   if (fs.existsSync(CACHE_FILE)) {
