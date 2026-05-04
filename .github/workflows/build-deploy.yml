@@ -10,6 +10,8 @@ on:
   schedule:
     - cron: '0 6 * * *'   # daily at 06:00 UTC
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   build-and-deploy:
@@ -33,6 +35,10 @@ jobs:
 
       - name: Build static export
         run: npm run build
+        working-directory: app
+
+      - name: CNAME for actions
+        run: printf metagross.net > ./out/CNAME
         working-directory: app
 
       - name: Deploy to GitHub Pages
