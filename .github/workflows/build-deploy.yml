@@ -39,6 +39,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.DEPLOY_TOKEN }}
-          external_repository: <owner>/<pages-repo>
+          external_repository: redblackgaming/redblackgaming.github.io
           publish_branch: gh-pages
           publish_dir: app/out
