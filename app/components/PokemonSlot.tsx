@@ -39,7 +39,7 @@ export default function PokemonSlot({
   const selectorOpen = forceOpen || localOpen;
 
   const label = slot.filled
-    ? slot.pokemon.name.charAt(0).toUpperCase() + slot.pokemon.name.slice(1)
+    ? slot.pokemon.name.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     : '—';
 
   const bg = disabled
