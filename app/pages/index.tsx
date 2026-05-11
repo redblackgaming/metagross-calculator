@@ -6,6 +6,7 @@ import { Pokemon, TypeIndex } from '@/lib/typings';
 import { buildTypeIndex, buildFilteredTypeIndex } from '@/lib/buildTypeIndex';
 import TeamCalculator from '@/components/TeamCalculator';
 import SafestTeams from '@/components/SafestTeams';
+import bestTeamsData from '@/data/best-teams.json';
 
 type View = 'calculator' | 'safest-teams';
 
@@ -127,7 +128,15 @@ export default function Home({ allPokemon, champions, allTypeIndex, championsTyp
           championsTypeIndex={championsTypeIndex}
         />
       )}
-      {view === 'safest-teams' && <SafestTeams />}
+      {view === 'safest-teams' && (
+        <SafestTeams
+          allPokemon={allPokemon}
+          champions={champions}
+          allTypeIndex={allTypeIndex}
+          championsTypeIndex={championsTypeIndex}
+          bestTeams={bestTeamsData as number[][][]}
+        />
+      )}
     </div>
   );
 }
