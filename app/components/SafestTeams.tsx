@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useRouter } from 'next/router';
 import { Pokemon, TypeIndex, Typing, typingKey, uncoveredTypes } from '@/lib/typings';
@@ -7,12 +7,9 @@ import PokemonSlot, { SlotState } from '@/components/PokemonSlot';
 import PoolFilterDropdown from '@/components/PoolFilterDropdown';
 import RandomizeButton from '@/components/RandomizeButton';
 
-type PoolFilter = 'champions' | 'all';
-
 interface SafestTeamsProps {
   allPokemon: Pokemon[];
   champions: string[];
-  allTypeIndex: TypeIndex;
   championsTypeIndex: TypeIndex;
   bestTeams: number[][][];
 }
@@ -42,7 +39,6 @@ function buildSlots(bestTeams: number[][][], typeIndex: TypeIndex, pool: Pokemon
   return pickPokemon(typings, typeIndex, pool).map(p => ({ filled: true as const, pokemon: p }));
 }
 
-// Reuse the same share modal style as InputTeam
 function ShareModal({ slots, onClose }: { slots: SlotState[]; onClose: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
@@ -91,7 +87,6 @@ function ShareModal({ slots, onClose }: { slots: SlotState[]; onClose: () => voi
   );
 }
 
-// Returns the typings in the pool that no pokemon on the team can hit super-effectively
 function getUncoveredTypes(slots: SlotState[], pool: Pokemon[]): string {
   const typings = slots
     .filter((s): s is { filled: true; pokemon: Pokemon } => s.filled)
@@ -103,22 +98,17 @@ function getUncoveredTypes(slots: SlotState[], pool: Pokemon[]): string {
   ).join(', ');
 }
 
-export default function SafestTeams({ allPokemon, champions, allTypeIndex, championsTypeIndex, bestTeams }: SafestTeamsProps) {
+export default function SafestTeams({ allPokemon, champions, championsTypeIndex, bestTeams }: SafestTeamsProps) {
   const router = useRouter();
   const idToPokemon = new Map(allPokemon.map(p => [p.id, p]));
   const [hydrated, setHydrated] = useState(false);
-  const [poolFilter, setPoolFilter] = useState<PoolFilter>('champions');
   const [shareOpen, setShareOpen] = useState(false);
   const [forcedOpenIndex, setForcedOpenIndex] = useState<number | null>(null);
 
-  const activeTypeIndex = poolFilter === 'champions' ? championsTypeIndex : allTypeIndex;
-  const activePool = poolFilter === 'champions'
-    ? allPokemon.filter(p => champions.includes(p.name))
-    : allPokemon;
+  const pool = allPokemon.filter(p => champions.includes(p.name));
 
   const [slots, setSlots] = useState<SlotState[] | null>(null);
 
-  // Hydrate from URL query params on client, fall back to random team
   useEffect(() => {
     if (!router.isReady || hydrated) return;
     setHydrated(true);
@@ -132,73 +122,60 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
       });
       setSlots(parsed);
     } else {
-      setSlots(buildSlots(bestTeams, activeTypeIndex, activePool));
+      setSlots(buildSlots(bestTeams, championsTypeIndex, pool));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query]);
 
-  // Pool for a slot: all pokemon in the active pool with the same typing
   function poolForSlot(slot: SlotState): Pokemon[] {
     if (!slot.filled) return [];
     const key = typingKey(slot.pokemon.typing);
-    const names = new Set(activeTypeIndex[key] ?? []);
-    return activePool.filter(p => names.has(p.name));
+    const names = new Set(championsTypeIndex[key] ?? []);
+    return pool.filter(p => names.has(p.name));
   }
 
-  const handlePoolFilterChange = useCallback((newFilter: PoolFilter) => {
-    setPoolFilter(newFilter);
-    const newTypeIndex = newFilter === 'champions' ? championsTypeIndex : allTypeIndex;
-    const newPool = newFilter === 'champions'
-      ? allPokemon.filter(p => champions.includes(p.name))
-      : allPokemon;
-    setSlots(buildSlots(bestTeams, newTypeIndex, newPool));
-  }, [bestTeams, allPokemon, champions, allTypeIndex, championsTypeIndex]);
-
-  const handleRandomize = useCallback(() => {
-    setSlots(buildSlots(bestTeams, activeTypeIndex, activePool));
-  }, [bestTeams, activeTypeIndex, activePool]);
+  function handleRandomize() {
+    setSlots(buildSlots(bestTeams, championsTypeIndex, pool));
+  }
 
   function handleSlotSelect(index: number, pokemon: Pokemon) {
     setSlots(prev => prev ? prev.map((s, i) => i === index ? { filled: true as const, pokemon } : s) : prev);
   }
 
-  // RandomizeButton enables when candidateTeams.length > 1
   const fakeCandidateTeams: Typing[][] = [[], []];
 
   return (
     <main className="flex flex-col flex-1 items-center px-6 py-4 gap-6">
-      {/* Pool filter — top of page like the calculator */}
       <div className="flex justify-center">
         <PoolFilterDropdown
-          value={poolFilter}
+          value="champions"
           hasFilledSlots={false}
-          onChange={handlePoolFilterChange}
+          onChange={() => {}}
+          options={['champions']}
         />
       </div>
 
       {/* Team grid + buttons */}
       <div className="flex flex-col gap-4">
-        {/* Descriptive text */}
         {slots && (
           <p className="text-sm text-gray-700 w-[80vw] md:w-[25vw]">
             This team has an answer to all but the following types:{' '}
-            <span className="font-semibold">{getUncoveredTypes(slots, activePool)}</span>
+            <span className="font-semibold">{getUncoveredTypes(slots, pool)}</span>
           </p>
         )}
 
-        {/* Team grid — 1 col on mobile, 2 cols on desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[80vw] md:w-[25vw]">
           {(slots ?? Array(4).fill({ filled: false })).map((slot, i) => {
-            const pool = slot.filled ? poolForSlot(slot) : [];
+            const slotPool = slot.filled ? poolForSlot(slot) : [];
             return (
               <PokemonSlot
                 key={i}
                 slot={slot}
-                pool={pool}
+                pool={slotPool}
                 allPokemon={allPokemon}
                 onSelect={p => handleSlotSelect(i, p)}
                 variant="output"
-                showChevron={pool.length > 1}
+                showChevron={slotPool.length > 1}
                 forceOpen={forcedOpenIndex === i}
                 onSelectorClose={() => setForcedOpenIndex(null)}
               />
@@ -206,7 +183,6 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
           })}
         </div>
 
-        {/* Buttons — same style as calculator */}
         <div className="flex items-center justify-center gap-3 w-[80vw] md:w-[25vw]">
           <RandomizeButton candidateTeams={fakeCandidateTeams} onRandomize={handleRandomize} />
           <button

@@ -2,7 +2,7 @@ import { GetStaticProps } from 'next';
 import path from 'path';
 import fs from 'fs';
 import { Pokemon, TypeIndex } from '@/lib/typings';
-import { buildTypeIndex, buildFilteredTypeIndex } from '@/lib/buildTypeIndex';
+import { buildFilteredTypeIndex } from '@/lib/buildTypeIndex';
 import Layout from '@/components/Layout';
 import SafestTeams from '@/components/SafestTeams';
 import bestTeamsData from '@/data/best-teams.json';
@@ -10,7 +10,6 @@ import bestTeamsData from '@/data/best-teams.json';
 interface SafestTeamsPageProps {
   allPokemon: Pokemon[];
   champions: string[];
-  allTypeIndex: TypeIndex;
   championsTypeIndex: TypeIndex;
 }
 
@@ -21,18 +20,16 @@ export const getStaticProps: GetStaticProps<SafestTeamsPageProps> = async () => 
   const champions: string[] = JSON.parse(
     fs.readFileSync(path.join(process.cwd(), 'data/champions.json'), 'utf-8')
   );
-  const allTypeIndex = buildTypeIndex(allPokemon);
   const championsTypeIndex = buildFilteredTypeIndex(allPokemon, champions);
-  return { props: { allPokemon, champions, allTypeIndex, championsTypeIndex } };
+  return { props: { allPokemon, champions, championsTypeIndex } };
 };
 
-export default function SafestTeamsPage({ allPokemon, champions, allTypeIndex, championsTypeIndex }: SafestTeamsPageProps) {
+export default function SafestTeamsPage({ allPokemon, champions, championsTypeIndex }: SafestTeamsPageProps) {
   return (
     <Layout title="Safest Teams">
       <SafestTeams
         allPokemon={allPokemon}
         champions={champions}
-        allTypeIndex={allTypeIndex}
         championsTypeIndex={championsTypeIndex}
         bestTeams={bestTeamsData as number[][][]}
       />
