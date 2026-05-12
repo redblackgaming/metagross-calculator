@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import { Pokemon, TypeIndex, Typing, typingKey } from '@/lib/typings';
 import { ALL_TYPES } from '@/lib/typeChart';
 import PokemonSlot, { SlotState } from '@/components/PokemonSlot';
@@ -55,7 +56,7 @@ function ShareModal({ slots, onClose }: { slots: SlotState[]; onClose: () => voi
     const ids = slots
       .filter((s): s is { filled: true; pokemon: Pokemon } => s.filled)
       .map(s => s.pokemon.id);
-    const url = `${window.location.origin}${window.location.pathname}?view=safest-teams&team=${ids.join(',')}`;
+    const url = `${window.location.origin}/safest-teams?team=${ids.join(',')}`;
     await navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -90,6 +91,9 @@ function ShareModal({ slots, onClose }: { slots: SlotState[]; onClose: () => voi
 }
 
 export default function SafestTeams({ allPokemon, champions, allTypeIndex, championsTypeIndex, bestTeams }: SafestTeamsProps) {
+  const router = useRouter();
+  const idToPokemon = new Map(allPokemon.map(p => [p.id, p]));
+  const [hydrated, setHydrated] = useState(false);
   const [poolFilter, setPoolFilter] = useState<PoolFilter>('champions');
   const [shareOpen, setShareOpen] = useState(false);
   const [forcedOpenIndex, setForcedOpenIndex] = useState<number | null>(null);
@@ -101,11 +105,24 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
 
   const [slots, setSlots] = useState<SlotState[] | null>(null);
 
-  // Initialize on client only to avoid SSR/hydration mismatch
+  // Hydrate from URL query params on client, fall back to random team
   useEffect(() => {
-    setSlots(buildSlots(bestTeams, activeTypeIndex, activePool));
+    if (!router.isReady || hydrated) return;
+    setHydrated(true);
+
+    const qTeam = router.query.team;
+    if (typeof qTeam === 'string' && qTeam.length > 0) {
+      const ids = qTeam.split(',').map(Number).filter(Boolean);
+      const parsed: SlotState[] = ids.map(id => {
+        const pokemon = idToPokemon.get(id);
+        return pokemon ? { filled: true as const, pokemon } : { filled: false as const };
+      });
+      setSlots(parsed);
+    } else {
+      setSlots(buildSlots(bestTeams, activeTypeIndex, activePool));
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [router.isReady, router.query]);
 
   // Pool for a slot: all pokemon in the active pool with the same typing
   function poolForSlot(slot: SlotState): Pokemon[] {
