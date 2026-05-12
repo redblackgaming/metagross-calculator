@@ -153,3 +153,38 @@ export function randomizer(candidateTeams: Typing[][], typeIndex: TypeIndex, all
     return { id: nameToId.get(name) ?? 0, name, typing };
   });
 }
+
+/**
+ * Given your team's typings and a pool of pokemon, returns the typings in the
+ * pool that no member of your team can hit super-effectively.
+ *
+ * Mirrors the Python `wins()` function from research.ipynb, running against
+ * every unique typing present in the pool as the "opponent team".
+ *
+ * @param myTeam - array of Typing (each pokemon's type(s))
+ * @param pool   - the active pokemon pool to derive opponent typings from
+ * @returns Typing[] of typings in the pool your team has no super-effective answer to
+ */
+export function uncoveredTypes(myTeam: Typing[], pool: Pokemon[]): Typing[] {
+  // Build the set of unique typings in the pool
+  const uniqueTypings = new Map<string, Typing>();
+  for (const p of pool) {
+    uniqueTypings.set(typingKey(p.typing), p.typing);
+  }
+  const uncovered = new Map<string, Typing>(uniqueTypings);
+
+  for (const friendTyping of myTeam) {
+    for (const attackType of friendTyping) {
+      const attackIdx = TYPE_INDEX[attackType];
+      for (const [key, defTyping] of uniqueTypings) {
+        let scalar = TYPE_CHART[attackIdx][TYPE_INDEX[defTyping[0]]];
+        if (defTyping[1]) scalar *= TYPE_CHART[attackIdx][TYPE_INDEX[defTyping[1]]];
+        if (scalar > 1) {
+          uncovered.delete(key);
+        }
+      }
+    }
+  }
+
+  return Array.from(uncovered.values());
+}

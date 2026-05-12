@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { copyToClipboard } from '@/lib/clipboard';
 import { useRouter } from 'next/router';
-import { Pokemon, TypeIndex, Typing, typingKey } from '@/lib/typings';
+import { Pokemon, TypeIndex, Typing, typingKey, uncoveredTypes } from '@/lib/typings';
 import { ALL_TYPES } from '@/lib/typeChart';
 import PokemonSlot, { SlotState } from '@/components/PokemonSlot';
 import PoolFilterDropdown from '@/components/PoolFilterDropdown';
@@ -91,6 +91,18 @@ function ShareModal({ slots, onClose }: { slots: SlotState[]; onClose: () => voi
   );
 }
 
+// Returns the typings in the pool that no pokemon on the team can hit super-effectively
+function getUncoveredTypes(slots: SlotState[], pool: Pokemon[]): string {
+  const typings = slots
+    .filter((s): s is { filled: true; pokemon: Pokemon } => s.filled)
+    .map(s => s.pokemon.typing);
+  const types = uncoveredTypes(typings, pool);
+  if (types.length === 0) return 'none';
+  return types.map(t =>
+    '(' + t.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(',') + ')'
+  ).join(', ');
+}
+
 export default function SafestTeams({ allPokemon, champions, allTypeIndex, championsTypeIndex, bestTeams }: SafestTeamsProps) {
   const router = useRouter();
   const idToPokemon = new Map(allPokemon.map(p => [p.id, p]));
@@ -122,7 +134,7 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
     } else {
       setSlots(buildSlots(bestTeams, activeTypeIndex, activePool));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query]);
 
   // Pool for a slot: all pokemon in the active pool with the same typing
@@ -165,7 +177,15 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
       </div>
 
       {/* Team grid + buttons */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        {/* Descriptive text */}
+        {slots && (
+          <p className="text-sm text-gray-700 w-[80vw] md:w-[25vw]">
+            This team has an answer to all but the following types:{' '}
+            <span className="font-semibold">{getUncoveredTypes(slots, activePool)}</span>
+          </p>
+        )}
+
         {/* Team grid — 1 col on mobile, 2 cols on desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[80vw] md:w-[25vw]">
           {(slots ?? Array(4).fill({ filled: false })).map((slot, i) => {
