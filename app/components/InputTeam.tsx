@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pokemon } from '@/lib/typings';
 import PokemonSlot, { SlotState } from './PokemonSlot';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface InputTeamProps {
   slots: SlotState[];
@@ -44,13 +45,13 @@ function ShareModal({ team, shareUrl, onClose }: {
   }, [onClose]);
 
   async function copyLink() {
-    await navigator.clipboard.writeText(shareUrl);
+    await copyToClipboard(shareUrl);
     setLinkState('copied');
     setTimeout(() => setLinkState('idle'), 2000);
   }
 
   async function copyShowdown() {
-    await navigator.clipboard.writeText(buildShowdownText(team));
+    await copyToClipboard(buildShowdownText(team));
     setShowdownState('copied');
     setTimeout(() => setShowdownState('idle'), 2000);
   }

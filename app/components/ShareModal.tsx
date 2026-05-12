@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pokemon } from '@/lib/typings';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ShareModalProps {
   team: Pokemon[];
@@ -47,7 +48,7 @@ export default function ShareModal({ team, onClose }: ShareModalProps) {
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await copyToClipboard(window.location.href);
       setLinkState('copied');
       setTimeout(() => setLinkState('idle'), 2000);
     } catch {
@@ -57,7 +58,7 @@ export default function ShareModal({ team, onClose }: ShareModalProps) {
 
   async function copyShowdown() {
     try {
-      await navigator.clipboard.writeText(buildShowdownText(team));
+      await copyToClipboard(buildShowdownText(team));
       setShowdownCopyState('copied');
       setTimeout(() => setShowdownCopyState('idle'), 2000);
     } catch {

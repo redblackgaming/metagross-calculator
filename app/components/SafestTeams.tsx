@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { copyToClipboard } from '@/lib/clipboard';
 import { useRouter } from 'next/router';
 import { Pokemon, TypeIndex, Typing, typingKey } from '@/lib/typings';
 import { ALL_TYPES } from '@/lib/typeChart';
@@ -57,7 +58,7 @@ function ShareModal({ slots, onClose }: { slots: SlotState[]; onClose: () => voi
       .filter((s): s is { filled: true; pokemon: Pokemon } => s.filled)
       .map(s => s.pokemon.id);
     const url = `${window.location.origin}/safest-teams?team=${ids.join(',')}`;
-    await navigator.clipboard.writeText(url);
+    await copyToClipboard(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -163,31 +164,30 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
         />
       </div>
 
-      {/* Team row + buttons centered in remaining space */}
-      <div className="flex flex-col flex-1 items-center justify-center gap-6">
-        {/* Team row — each slot is 1/8 screen width */}
-        <div className="flex flex-row gap-3 justify-center">
+      {/* Team grid + buttons */}
+      <div className="flex flex-col gap-6">
+        {/* Team grid — 1 col on mobile, 2 cols on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-[80vw] md:w-[25vw]">
           {(slots ?? Array(4).fill({ filled: false })).map((slot, i) => {
             const pool = slot.filled ? poolForSlot(slot) : [];
             return (
-              <div key={i} style={{ width: '12.5vw' }}>
-                <PokemonSlot
-                  slot={slot}
-                  pool={pool}
-                  allPokemon={allPokemon}
-                  onSelect={p => handleSlotSelect(i, p)}
-                  variant="output"
-                  showChevron={pool.length > 1}
-                  forceOpen={forcedOpenIndex === i}
-                  onSelectorClose={() => setForcedOpenIndex(null)}
-                />
-              </div>
+              <PokemonSlot
+                key={i}
+                slot={slot}
+                pool={pool}
+                allPokemon={allPokemon}
+                onSelect={p => handleSlotSelect(i, p)}
+                variant="output"
+                showChevron={pool.length > 1}
+                forceOpen={forcedOpenIndex === i}
+                onSelectorClose={() => setForcedOpenIndex(null)}
+              />
             );
           })}
         </div>
 
         {/* Buttons — same style as calculator */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center gap-3 w-[80vw] md:w-[25vw]">
           <RandomizeButton candidateTeams={fakeCandidateTeams} onRandomize={handleRandomize} />
           <button
             onClick={() => setShareOpen(true)}
