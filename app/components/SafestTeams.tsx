@@ -99,9 +99,13 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
     ? allPokemon.filter(p => champions.includes(p.name))
     : allPokemon;
 
-  const [slots, setSlots] = useState<SlotState[]>(() =>
-    buildSlots(bestTeams, activeTypeIndex, activePool)
-  );
+  const [slots, setSlots] = useState<SlotState[] | null>(null);
+
+  // Initialize on client only to avoid SSR/hydration mismatch
+  useEffect(() => {
+    setSlots(buildSlots(bestTeams, activeTypeIndex, activePool));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Pool for a slot: all pokemon in the active pool with the same typing
   function poolForSlot(slot: SlotState): Pokemon[] {
@@ -125,7 +129,7 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
   }, [bestTeams, activeTypeIndex, activePool]);
 
   function handleSlotSelect(index: number, pokemon: Pokemon) {
-    setSlots(prev => prev.map((s, i) => i === index ? { filled: true as const, pokemon } : s));
+    setSlots(prev => prev ? prev.map((s, i) => i === index ? { filled: true as const, pokemon } : s) : prev);
   }
 
   // RandomizeButton enables when candidateTeams.length > 1
@@ -146,8 +150,8 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
       <div className="flex flex-col flex-1 items-center justify-center gap-6">
         {/* Team row — each slot is 1/8 screen width */}
         <div className="flex flex-row gap-3 justify-center">
-          {slots.map((slot, i) => {
-            const pool = poolForSlot(slot);
+          {(slots ?? Array(4).fill({ filled: false })).map((slot, i) => {
+            const pool = slot.filled ? poolForSlot(slot) : [];
             return (
               <div key={i} style={{ width: '12.5vw' }}>
                 <PokemonSlot
@@ -177,7 +181,7 @@ export default function SafestTeams({ allPokemon, champions, allTypeIndex, champ
         </div>
       </div>
 
-      {shareOpen && (
+      {shareOpen && slots && (
         <ShareModal slots={slots} onClose={() => setShareOpen(false)} />
       )}
     </main>
