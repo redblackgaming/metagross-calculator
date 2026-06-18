@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 
 const NAV_ITEMS = [
   { href: '/', label: '🧮 Team Calculator' },
-  { href: '/safest-teams', label: '🛡️ Safest Teams' },
+  { href: '/safest-teams', label: '🗡️ STAB Move Calculator' },
 ];
 
 interface LayoutProps {

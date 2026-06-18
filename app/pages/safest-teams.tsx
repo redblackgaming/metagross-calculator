@@ -26,7 +26,7 @@ export const getStaticProps: GetStaticProps<SafestTeamsPageProps> = async () => 
 
 export default function SafestTeamsPage({ allPokemon, champions, championsTypeIndex }: SafestTeamsPageProps) {
   return (
-    <Layout title="Safest Teams">
+    <Layout title="STAB Move Calculator">
       <SafestTeams
         allPokemon={allPokemon}
         champions={champions}

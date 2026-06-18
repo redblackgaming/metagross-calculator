@@ -159,7 +159,14 @@ export default function SafestTeams({ allPokemon, champions, championsTypeIndex,
       <div className="flex flex-col gap-4">
         {slots && (
           <p className="text-sm text-gray-700 w-[80vw] md:w-[25vw]">
-            This team has an answer to all but the following types:{' '}
+            This team has a{' '}
+            <span className="relative inline-block group">
+              <span className="underline decoration-dotted cursor-help">S.T.A.B.</span>
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition-none">
+                Same Type Attack Bonus
+              </span>
+            </span>
+            {' '}move for all but the following types:{' '}
             <span className="font-semibold">{getUncoveredTypes(slots, pool)}</span>
           </p>
         )}
