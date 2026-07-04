@@ -47,9 +47,9 @@ export function disadvantages(typing: Typing): TypeName[] {
 export function vsAdvantages(
   myTeam: Typing[],
   oppTeam: Pokemon[]
-): Array<[TypeName, Pokemon]> {
-  const result: Array<[TypeName, Pokemon]> = [];
-  for (const myTyping of myTeam) {
+): Array<Array<[TypeName, Pokemon]>> {
+  return myTeam.map(myTyping => {
+    const result: Array<[TypeName, Pokemon]> = [];
     for (const myType of myTyping) {
       const myTypeIdx = TYPE_INDEX[myType];
       for (const opp of oppTeam) {
@@ -60,8 +60,8 @@ export function vsAdvantages(
         if (scalar > 1) result.push([myType, opp]);
       }
     }
-  }
-  return result;
+    return result;
+  });
 }
 
 export function* combinations<T>(arr: T[], k: number): Generator<T[]> {

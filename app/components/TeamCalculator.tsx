@@ -1,12 +1,13 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { Pokemon, TypeIndex, randomizer } from '@/lib/typings';
+import { Pokemon, TypeIndex, randomizer, vsAdvantages } from '@/lib/typings';
 import { MaximizeAdvantagesStrategy } from '@/lib/strategies/MaximizeAdvantagesStrategy';
 import { SlotState } from '@/components/PokemonSlot';
 import PoolFilterDropdown from '@/components/PoolFilterDropdown';
 import FormatDropdown, { Format, FORMAT_TEAM_SIZE } from '@/components/FormatDropdown';
 import InputTeam from '@/components/InputTeam';
 import OutputTeam from '@/components/OutputTeam';
+import AdvantageLines, { AdvantageLine } from '@/components/AdvantageLines';
 
 type PoolFilter = 'champions' | 'all';
 
@@ -19,6 +20,7 @@ interface TeamCalculatorProps {
 
 const emptySlots = (size: number): SlotState[] =>
   Array.from({ length: size }, () => ({ filled: false as const }));
+
 
 export default function TeamCalculator({ allPokemon, champions, allTypeIndex, championsTypeIndex }: TeamCalculatorProps) {
   const router = useRouter();
@@ -34,6 +36,15 @@ export default function TeamCalculator({ allPokemon, champions, allTypeIndex, ch
   const [candidateTeams, setCandidateTeams] = useState<any[][]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
   const [calcElapsed, setCalcElapsed] = useState(0);
+
+  // --- line overlay state ---
+  const [hoveredOutputIndex, setHoveredOutputIndex] = useState<number | null>(null);
+
+  // refs for slot DOM elements
+  const outputSlotRefs = useRef<React.RefObject<HTMLDivElement>[]>([]);
+  const inputSlotRefs  = useRef<React.RefObject<HTMLDivElement>[]>([]);
+  // ref to the container that holds both columns (SVG is positioned relative to it)
+  const columnsContainerRef = useRef<HTMLDivElement>(null);
 
   const strategy = useMemo(() => new MaximizeAdvantagesStrategy(), []);
 
@@ -180,6 +191,44 @@ export default function TeamCalculator({ allPokemon, champions, allTypeIndex, ch
     pushDropdownQSP(poolFilter, newFormat);
   }
 
+  // --- compute advantage lines ---
+  const advantageLines = useMemo<AdvantageLine[]>(() => {
+    const filledOutput = outputSlots
+      .map((s, i) => ({ s, i }))
+      .filter((x): x is { s: { filled: true; pokemon: Pokemon }; i: number } => x.s.filled);
+    const filledInput = inputSlots
+      .filter((s): s is { filled: true; pokemon: Pokemon } => s.filled)
+      .map(s => s.pokemon);
+
+    if (filledOutput.length === 0 || filledInput.length === 0) return [];
+
+    const outputTypings = filledOutput.map(({ s }) => s.pokemon.typing);
+    const perSlot = vsAdvantages(outputTypings, filledInput);
+
+    const lines: AdvantageLine[] = [];
+    perSlot.forEach((slotAdvantages, slotIdx) => {
+      const outputIndex = filledOutput[slotIdx].i;
+      for (const [type, opp] of slotAdvantages) {
+        const inputIndex = inputSlots.findIndex(
+          is => is.filled && (is as { filled: true; pokemon: Pokemon }).pokemon.name === opp.name
+        );
+        if (inputIndex === -1) continue;
+        lines.push({ outputIndex, inputIndex, type });
+      }
+    });
+    return lines;
+  }, [outputSlots, inputSlots]);
+
+  // indices with at least one line
+  const highlightedOutputIndices = useMemo(
+    () => new Set(advantageLines.map(l => l.outputIndex)),
+    [advantageLines]
+  );
+  const highlightedInputIndices = useMemo(
+    () => new Set(advantageLines.map(l => l.inputIndex)),
+    [advantageLines]
+  );
+
   const hasFilledSlots = inputSlots.some((s: SlotState) => s.filled);
 
   return (
@@ -197,6 +246,7 @@ export default function TeamCalculator({ allPokemon, champions, allTypeIndex, ch
           </p>
         );
       })()}
+
       <div className="flex justify-center gap-4 mb-4">
         <PoolFilterDropdown
           value={poolFilter}
@@ -209,7 +259,18 @@ export default function TeamCalculator({ allPokemon, champions, allTypeIndex, ch
           onChange={handleFormatChange}
         />
       </div>
-      <div className="flex flex-col md:flex-row justify-evenly items-start gap-6">
+
+      {/* Two columns with SVG overlay */}
+      <div ref={columnsContainerRef} className="relative flex flex-col md:flex-row justify-evenly items-start gap-6">
+        <AdvantageLines
+          mode="hover"
+          hoveredOutputIndex={hoveredOutputIndex}
+          lines={advantageLines}
+          outputRefs={outputSlotRefs.current}
+          inputRefs={inputSlotRefs.current}
+          containerRef={columnsContainerRef}
+        />
+
         <div className="w-full md:w-80 md:order-1 order-2">
           <OutputTeam
             slots={outputSlots}
@@ -221,8 +282,13 @@ export default function TeamCalculator({ allPokemon, champions, allTypeIndex, ch
             activePool={activePool}
             onSlotSelect={handleOutputSlotSelect}
             onRandomize={handleRandomize}
+            onRefsReady={refs => { outputSlotRefs.current = refs; }}
+            hoveredIndex={hoveredOutputIndex ?? -1}
+            onHoverChange={(i, h) => setHoveredOutputIndex(h ? i : null)}
+            highlightedIndices={highlightedOutputIndices}
           />
         </div>
+
         <div className="w-full md:w-80 md:order-2 order-1">
           <InputTeam
             slots={inputSlots}
@@ -230,6 +296,8 @@ export default function TeamCalculator({ allPokemon, champions, allTypeIndex, ch
             allPokemon={allPokemon}
             onSlotSelect={handleInputSlotSelect}
             buildShareUrl={buildShareUrl}
+            onRefsReady={refs => { inputSlotRefs.current = refs; }}
+            highlightedIndices={highlightedInputIndices}
           />
         </div>
       </div>

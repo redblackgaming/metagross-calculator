@@ -9,6 +9,10 @@ interface InputTeamProps {
   allPokemon: Pokemon[];
   onSlotSelect: (index: number, pokemon: Pokemon) => void;
   buildShareUrl: (slots: SlotState[]) => string;
+  /** receives the array of refs (one per slot) after render */
+  onRefsReady?: (refs: React.RefObject<HTMLDivElement>[]) => void;
+  /** set of input slot indices that have lines pointing at them */
+  highlightedIndices?: Set<number>;
 }
 
 // Converts API name (e.g. "mr-mime") to Showdown format ("Mr. Mime")
@@ -97,11 +101,19 @@ function ShareModal({ team, shareUrl, onClose }: {
   );
 }
 
-export default function InputTeam({ slots, pool, allPokemon, onSlotSelect, buildShareUrl }: InputTeamProps) {
+export default function InputTeam({ slots, pool, allPokemon, onSlotSelect, buildShareUrl, onRefsReady, highlightedIndices }: InputTeamProps) {
   const [openSlot, setOpenSlot] = useState<number>(-1);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
 
+  // stable ref array — one per slot
+  const refsRef = useRef<React.RefObject<HTMLDivElement>[]>([]);
+  if (refsRef.current.length !== slots.length) {
+    refsRef.current = Array.from({ length: slots.length }, (_, i) =>
+      refsRef.current[i] ?? { current: null }
+    );
+    onRefsReady?.(refsRef.current);
+  }
   const allFilled = slots.every(s => s.filled);
   const filledTeam = slots
     .filter((s): s is { filled: true; pokemon: Pokemon } => s.filled)
@@ -136,6 +148,7 @@ export default function InputTeam({ slots, pool, allPokemon, onSlotSelect, build
         return (
           <PokemonSlot
             key={i}
+            ref={refsRef.current[i]}
             slot={slot}
             pool={slotPool}
             allPokemon={allPokemon}
@@ -143,6 +156,7 @@ export default function InputTeam({ slots, pool, allPokemon, onSlotSelect, build
             variant="input"
             forceOpen={openSlot === i}
             onSelectorClose={() => setOpenSlot(-1)}
+            highlighted={highlightedIndices?.has(i) ?? false}
           />
         );
       })}

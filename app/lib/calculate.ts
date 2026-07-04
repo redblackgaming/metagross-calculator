@@ -37,7 +37,7 @@ export function calculate(
   const allTeams: Array<{ advs: number; team: Typing[] }> = [];
   for (const combo of combinations(sortedTypes, k)) {
     for (const team of genVariations(combo)) {
-      const advs = vsAdvantages(team, inputTeam).length;
+      const advs = vsAdvantages(team, inputTeam).flat().length;
       if (advs > maxAdvs) maxAdvs = advs;
       allTeams.push({ advs, team });
     }

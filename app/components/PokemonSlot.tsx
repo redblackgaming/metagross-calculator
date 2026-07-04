@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import Image from 'next/image';
 import { Pokemon, getSpriteUrl, getSpriteId } from '@/lib/typings';
 import PokemonSelector from './PokemonSelector';
@@ -15,11 +15,14 @@ interface PokemonSlotProps {
   forceOpen?: boolean;
   onSelectorClose?: () => void;
   showChevron?: boolean;
+  /** optional highlight ring for when a line is drawn to/from this slot */
+  highlighted?: boolean;
+  onHoverChange?: (hovered: boolean) => void;
 }
 
 const FALLBACK_SUFFIXES = ['mf_n', 'uk_n', 'md_n', 'fd_n', 'fo_n', 'mo_n'];
 
-export default function PokemonSlot({
+const PokemonSlot = forwardRef<HTMLDivElement, PokemonSlotProps>(function PokemonSlot({
   slot,
   pool,
   allPokemon = [],
@@ -29,7 +32,9 @@ export default function PokemonSlot({
   forceOpen = false,
   onSelectorClose,
   showChevron = false,
-}: PokemonSlotProps) {
+  highlighted = false,
+  onHoverChange,
+}, ref) {
   const [localOpen, setLocalOpen] = useState(false);
   const [suffixIndex, setSuffixIndex] = useState(0);
 
@@ -71,8 +76,11 @@ export default function PokemonSlot({
   return (
     <>
       <div
+        ref={ref}
         onClick={handleClick}
-        className={`relative flex items-center justify-between ${bg} rounded-2xl px-4 py-3 select-none transition-colors shadow-md min-h-[72px]`}
+        onMouseEnter={() => onHoverChange?.(true)}
+        onMouseLeave={() => onHoverChange?.(false)}
+        className={`relative flex items-center justify-between ${bg} rounded-2xl px-4 py-3 select-none transition-colors shadow-md min-h-[72px]${highlighted ? ' ring-2 ring-white ring-offset-1' : ''}`}
       >
         <span className={`text-white font-semibold text-sm truncate pr-2 ${!slot.filled ? 'opacity-50 italic' : ''}`}>
           {label}
@@ -101,4 +109,6 @@ export default function PokemonSlot({
       )}
     </>
   );
-}
+});
+
+export default PokemonSlot;

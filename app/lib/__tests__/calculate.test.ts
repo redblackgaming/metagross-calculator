@@ -53,7 +53,7 @@ describe('calculate', () => {
     // All teams must share the same (maximum) advantage count
     const { vsAdvantages } = require('../typings');
     for (const team of result.candidateTeams) {
-      expect(vsAdvantages(team, inputTeam).length).toBe(result.advantageCount);
+      expect(vsAdvantages(team, inputTeam).flat().length).toBe(result.advantageCount);
     }
   });
 });
