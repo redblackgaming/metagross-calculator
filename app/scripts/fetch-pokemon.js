@@ -55,6 +55,7 @@ function fetchFromAPI() {
 
 function formatPokemon(p) {
   const types = p.pokemontypes;
+  if (!types || types.length === 0) return null;
   const typing = [types[0].type.name];
   if (types.length > 1) typing.push(types[1].type.name);
   return { id: p.id, name: p.name, typing };
@@ -81,7 +82,7 @@ async function main() {
     }
   }
 
-  const pokemon = data.data.typings.map(formatPokemon);
+  const pokemon = data.data.typings.map(formatPokemon).filter(Boolean);
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(pokemon, null, 2));
   console.log(`Wrote ${pokemon.length} pokemon to data/pokemon.json`);
 }
