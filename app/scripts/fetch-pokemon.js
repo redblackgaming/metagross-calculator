@@ -40,9 +40,10 @@ function fetchFromAPI() {
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
         try {
-          resolve(JSON.parse(data));
+          const parsed = JSON.parse(data);
+          resolve(parsed);
         } catch (e) {
-          reject(new Error(`Failed to parse response: ${e.message}`));
+          reject(new Error(`Failed to parse response: ${e.message}\nRaw: ${data.slice(0, 500)}`));
         }
       });
     });
@@ -75,14 +76,37 @@ async function main() {
     console.log('Fetching from PokeAPI...');
     try {
       data = await fetchFromAPI();
-      fs.writeFileSync(CACHE_FILE, JSON.stringify(data));
     } catch (err) {
       console.error(`Error fetching from PokeAPI: ${err.message}`);
       process.exit(1);
     }
+
+    if (data.errors) {
+      console.error('GraphQL errors:', JSON.stringify(data.errors, null, 2));
+      process.exit(1);
+    }
+
+    if (!data.data || !data.data.typings) {
+      console.error('Unexpected response shape:', JSON.stringify(data, null, 2).slice(0, 500));
+      process.exit(1);
+    }
+
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(data));
   }
 
-  const pokemon = data.data.typings.map(formatPokemon).filter(Boolean);
+  const typings = data.data?.typings;
+  if (!typings || !Array.isArray(typings)) {
+    console.error('No typings array in response. Keys:', Object.keys(data.data || {}));
+    process.exit(1);
+  }
+
+  const pokemon = typings.map(formatPokemon).filter(Boolean);
+
+  if (pokemon.length === 0) {
+    console.error('Wrote 0 pokemon — something went wrong. Raw typings sample:', JSON.stringify(typings.slice(0, 3)));
+    process.exit(1);
+  }
+
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(pokemon, null, 2));
   console.log(`Wrote ${pokemon.length} pokemon to data/pokemon.json`);
 }
