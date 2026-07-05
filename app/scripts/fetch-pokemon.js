@@ -7,77 +7,85 @@ const https = require('https');
 
 const CACHE_FILE  = path.join(__dirname, '../tmp/cache.json');
 const OUTPUT_FILE = path.join(__dirname, '../data/pokemon.json');
-const BASE_URL    = 'https://pokeapi.co/api/v2';
-const CONCURRENCY = 20;
+const GQL_HOST    = 'beta.pokeapi.co';
+const GQL_PATH    = '/graphql/v1beta';
 
-function get(url) {
+const QUERY = `
+query {
+  typings: pokemon_v2_pokemon(order_by: {id: asc}) {
+    id
+    name
+    pokemon_v2_pokemontypes {
+      pokemon_v2_type { name }
+    }
+  }
+}
+`;
+
+function fetchFromAPI() {
   return new Promise((resolve, reject) => {
-    https.get(url, res => {
+    const body = JSON.stringify({ query: QUERY });
+    const req = https.request({
+      hostname: GQL_HOST,
+      path: GQL_PATH,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, res => {
       let d = '';
       res.on('data', c => { d += c; });
       res.on('end', () => {
         try { resolve(JSON.parse(d)); }
-        catch (e) { reject(new Error(`JSON parse failed for ${url}: ${e.message}`)); }
+        catch (e) { reject(new Error(`JSON parse failed: ${e.message}\nRaw: ${d.slice(0, 300)}`)); }
       });
-    }).on('error', reject);
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
   });
 }
 
-async function fetchAllNames() {
-  const first = await get(`${BASE_URL}/pokemon?limit=1`);
-  const total = first.count;
-  const data  = await get(`${BASE_URL}/pokemon?limit=${total}`);
-  return data.results; // [{ name, url }]
-}
-
-async function fetchPokemon(url) {
-  const data = await get(url);
-  const types = data.types; // [{ slot, type: { name } }]
+function formatPokemon(p) {
+  const types = p.pokemon_v2_pokemontypes;
   if (!types || types.length === 0) return null;
-  const sorted = [...types].sort((a, b) => a.slot - b.slot);
-  const typing = sorted.map(t => t.type.name);
-  return { id: data.id, name: data.name, typing };
-}
-
-async function runWithConcurrency(tasks, limit) {
-  const results = new Array(tasks.length);
-  let index = 0;
-
-  async function worker() {
-    while (index < tasks.length) {
-      const i = index++;
-      results[i] = await tasks[i]();
-    }
-  }
-
-  await Promise.all(Array.from({ length: limit }, worker));
-  return results;
+  const typing = types.map(t => t.pokemon_v2_type.name);
+  return { id: p.id, name: p.name, typing };
 }
 
 async function main() {
   fs.mkdirSync(path.dirname(CACHE_FILE),  { recursive: true });
   fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
 
-  let pokemon;
+  let raw;
 
   if (fs.existsSync(CACHE_FILE)) {
     console.log('Using cached data');
-    pokemon = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
+    raw = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8'));
   } else {
-    console.log('Fetching pokemon list from PokeAPI REST...');
-    const names = await fetchAllNames();
-    console.log(`Fetching ${names.length} pokemon (${CONCURRENCY} at a time)...`);
+    console.log('Fetching from PokeAPI GraphQL...');
+    const res = await fetchFromAPI();
 
-    const tasks = names.map(({ url }) => () => fetchPokemon(url));
-    const raw   = await runWithConcurrency(tasks, CONCURRENCY);
-    pokemon     = raw.filter(Boolean);
-
-    if (pokemon.length === 0) {
-      console.error('Fetched 0 pokemon — aborting without caching.');
+    if (res.errors) {
+      console.error('GraphQL errors:', JSON.stringify(res.errors, null, 2));
       process.exit(1);
     }
 
-    fs.writeFileSync(CACHE_FILE, JSON.stringify(pokemon));
+    raw = res.data?.typings;
+    if (!Array.isArray(raw) || raw.length === 0) {
+      console.error('Empty or missing typings in response:', JSON.stringify(res).slice(0, 300));
+      process.exit(1);
+    }
+
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(raw));
+  }
+
+  const pokemon = raw.map(formatPokemon).filter(Boolean);
+
+  if (pokemon.length === 0) {
+    console.error('Formatted 0 pokemon — aborting.');
+    process.exit(1);
   }
 
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(pokemon, null, 2));
