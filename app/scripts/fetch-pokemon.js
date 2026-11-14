@@ -7,16 +7,16 @@ const https = require('https');
 
 const CACHE_FILE  = path.join(__dirname, '../tmp/cache.json');
 const OUTPUT_FILE = path.join(__dirname, '../data/pokemon.json');
-const GQL_HOST    = 'beta.pokeapi.co';
-const GQL_PATH    = '/graphql/v1beta';
+const GQL_HOST    = 'graphql.pokeapi.co';
+const GQL_PATH    = '/v1beta2';
 
 const QUERY = `
 query {
-  typings: pokemon_v2_pokemon(order_by: {id: asc}) {
+  typings: pokemon(order_by: {id: asc}) {
     id
     name
-    pokemon_v2_pokemontypes {
-      pokemon_v2_type { name }
+    pokemontypes {
+      type { name }
     }
   }
 }
@@ -48,9 +48,9 @@ function fetchFromAPI() {
 }
 
 function formatPokemon(p) {
-  const types = p.pokemon_v2_pokemontypes;
+  const types = p.pokemontypes;
   if (!types || types.length === 0) return null;
-  const typing = types.map(t => t.pokemon_v2_type.name);
+  const typing = types.map(t => t.type.name);
   return { id: p.id, name: p.name, typing };
 }
 
